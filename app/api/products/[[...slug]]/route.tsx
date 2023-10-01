@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import schema from './schema';
+import schema from '../../../products/[[...slug]]/schema';
 import prisma from '@/prisma/client'
 
-export async function GET(request: NextRequest) {
-  const users = await prisma.user.findMany();
+export async function GET(request: NextRequest,
+  { params }: { params: { slug: string[] } }) {
+  const slug = params.slug.join('/');
+  const products = await prisma.product.findMany({ where: { name: { contains: slug } } });
+
   return NextResponse.json(
-    users, { status: 200 },
+    products, { status: 200 },
   );
 }
 
@@ -19,24 +22,15 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  const user = await prisma.user.findUnique({
-    where: { email: body.email },
-  })
-
-  const newUser = await prisma.user.create({
+  const product = await prisma.product.create({
     data: {
       name: body.name,
-      email: body.email
+      description: body.description,
+      price: body.price,
     }
   })
 
-  if (user) {
-    return NextResponse.json(
-      { error: 'User already exists' }, { status: 400 }
-    )
-  }
-
   return NextResponse.json(
-    newUser, { status: 201 },
+    product, { status: 201 },
   )
 }
